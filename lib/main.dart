@@ -399,18 +399,17 @@ class _MyAppState extends State<MyApp> {
 
         ],
       ),
-      floatingActionButton: Row(
+      floatingActionButton: _image != null ? Row(
         mainAxisAlignment: MainAxisAlignment.end,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // _image != null ?
+
               FloatingActionButton(
                 heroTag: "file",
                 onPressed: predictImagePicker,
                 tooltip: 'Pick Image',
                 child: const Icon(Icons.image),
               ),
-                //  : Container(),
               const SizedBox(width: 10,),
               FloatingActionButton(
                 heroTag: "camera",
@@ -419,7 +418,7 @@ class _MyAppState extends State<MyApp> {
                 child: const Icon(Icons.camera_alt),
               ),
             ],
-          ),
+          ) : Container(),
     );
   }
 
@@ -449,7 +448,7 @@ class _MyAppState extends State<MyApp> {
                 ),
                 const SizedBox(height: 10,),
                 FloatingActionButton(
-                  heroTag: "dcamera",
+                  heroTag: "camera_2",
                   elevation: 0,
                   onPressed: openCamera,
                   tooltip: 'Take Photo',
