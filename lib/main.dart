@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:lottie/lottie.dart';
+import 'package:money_classification/camera.dart';
 import 'package:tflite/tflite.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -61,6 +62,25 @@ class _MyAppState extends State<MyApp> {
         EasyLoading.show();
       });
       predictImage(File(image.path));
+    }
+    catch(ex, stack) {
+      print(ex);
+    }
+  }
+  openCamera() {
+    try {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => CameraApp(cameraImageCallback: (path) {
+        // if (path == null) return;
+        Navigator.pop(context);
+
+        setState(() {
+          _busy = true;
+          _image = File(path);
+          EasyLoading.show();
+        });
+        predictImage(File(path));
+      })));
+
     }
     catch(ex, stack) {
       print(ex);
@@ -379,22 +399,34 @@ class _MyAppState extends State<MyApp> {
 
         ],
       ),
-      floatingActionButton: _image != null
-          ? FloatingActionButton(
-        onPressed: predictImagePicker,
-        tooltip: 'Pick Image',
-        child: const Icon(Icons.image),
-        // label: Text('Test again'),
-        // icon: Icon(Icons.add),
-      )
-          : Container(),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // _image != null ?
+              FloatingActionButton(
+                heroTag: "file",
+                onPressed: predictImagePicker,
+                tooltip: 'Pick Image',
+                child: const Icon(Icons.image),
+              ),
+                //  : Container(),
+              const SizedBox(width: 10,),
+              FloatingActionButton(
+                heroTag: "camera",
+                onPressed: openCamera,
+                tooltip: 'Take Photo',
+                child: const Icon(Icons.camera_alt),
+              ),
+            ],
+          ),
     );
   }
 
   Widget noImageSelected() {
     return Center(
       child: Container(
-        margin: const EdgeInsets.only(top: 170, left: 50, right: 50, bottom: 100),
+        margin: const EdgeInsets.only(top: 160, left: 50, right: 50, bottom: 65),
         height: MediaQuery.of(context).size.height - 140,
         child: DottedBorder(
           padding: const EdgeInsets.all(10),
@@ -412,8 +444,16 @@ class _MyAppState extends State<MyApp> {
                           child: Lottie.asset('assets/lottie/add_image.json', height: 150),
                         )),
                 const Text(
-                  'Select image to test',
-                  style: TextStyle(fontSize: 20),
+                  'Select image to test OR',
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 10,),
+                FloatingActionButton(
+                  heroTag: "dcamera",
+                  elevation: 0,
+                  onPressed: openCamera,
+                  tooltip: 'Take Photo',
+                  child: const Icon(Icons.camera_alt),
                 ),
               ],
             ),
