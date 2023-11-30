@@ -22,9 +22,10 @@ void main() {
   );
 }
 
-const String dense121 = "Dense121";
-const String inceptionV3 = "InceptionV3";
-const String vgg16 = "Vgg16";
+const String dense121New = "New Note";
+const String dense121Old = "Old Note";
+// const String inceptionV3 = "InceptionV3";
+// const String vgg16 = "Vgg16";
 // const String vgg19 = "Vgg19";
 
 class App extends StatelessWidget {
@@ -48,9 +49,11 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   File? _image;
   List? _recognitions;
-  String _model = dense121;
+  String _model = dense121New;
   bool _busy = false;
   bool _isGenuine = false;
+  String? resultText;
+  bool isDetected = false;
 
   Future predictImagePicker() async {
     try {
@@ -67,6 +70,7 @@ class _MyAppState extends State<MyApp> {
       print(ex);
     }
   }
+
   openCamera() {
     try {
       Navigator.push(context, MaterialPageRoute(builder: (context) => CameraApp(cameraImageCallback: (path) {
@@ -134,36 +138,36 @@ class _MyAppState extends State<MyApp> {
       try {
         String? res;
         switch (_model) {
-          case dense121:
+          case dense121New:
             res = await Tflite.loadModel(
-              model: "assets/dense121.tflite",
+              model: "assets/dense121_new.tflite",
               labels: "assets/labels.txt",
               // useGpuDelegate: true,
             );
             break;
-          case inceptionV3:
+          case dense121Old:
             res = await Tflite.loadModel(
-              model: "assets/InceptionV3.tflite",
+              model: "assets/dense121_old.tflite",
               labels: "assets/labels.txt",
               // useGpuDelegate: true,
             );
             break;
-          case vgg16:
-            res = await Tflite.loadModel(
-              model: "assets/Vgg16.tflite",
-              labels: "assets/labels.txt",
-              // useGpuDelegate: true,
-            );
-            break;
-          // case vgg19:
+          // case vgg16:
           //   res = await Tflite.loadModel(
-          //     model: "assets/Vgg19.tflite",
+          //     model: "assets/Vgg16.tflite",
+          //     labels: "assets/labels.txt",
           //     // useGpuDelegate: true,
           //   );
           //   break;
+        // case vgg19:
+        //   res = await Tflite.loadModel(
+        //     model: "assets/Vgg19.tflite",
+        //     // useGpuDelegate: true,
+        //   );
+        //   break;
           default:
             res = await Tflite.loadModel(
-              model: "assets/dense121.tflite",
+              model: "assets/dense121_new.tflite",
               labels: "assets/labels.txt",
               // useGpuDelegate: true,
             );
@@ -190,13 +194,18 @@ class _MyAppState extends State<MyApp> {
       );
       setState(() {
         _recognitions = recognitions!;
-        _isGenuine = recognitions.first?["label"]?.toString().contains("genuine") ?? false;
+
+        var result = getResultName(_recognitions?.first?["label"]);
+        isDetected = result != "unknown";
+        resultText = !isDetected ? "Unable to verify the note" : "$result with "
+            "${(_recognitions?.first?["confidence"] *100).toStringAsFixed(2)}% Confidence";
+
+        _isGenuine = (recognitions.first?["label"]?.toString().contains("genuine") ?? false) && resultText != null;
       });
     }
     catch(ex, stack) {
       print(ex);
     }
-
   }
 
   onSelect(model) async {
@@ -238,9 +247,9 @@ class _MyAppState extends State<MyApp> {
             child: Text(
                 "ETB Counterfeit Detector",
                 style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold)),
+                    color: Colors.black,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold)),
           ),
           Flexible(
             fit: FlexFit.tight,
@@ -250,7 +259,7 @@ class _MyAppState extends State<MyApp> {
               child: Row(
                 children: [
                   const Text(
-                    "Selected model : ",
+                    "Selected Note Condition : ",
                     style: TextStyle(fontSize: 18),
                   ),
                   PopupMenuButton(
@@ -258,17 +267,17 @@ class _MyAppState extends State<MyApp> {
                       itemBuilder: (context) {
                         List<PopupMenuEntry<String>> menuEntries = [
                           const PopupMenuItem<String>(
-                            value: dense121,
-                            child: Text(dense121),
+                            value: dense121New,
+                            child: Text(dense121New),
                           ),
                           const PopupMenuItem<String>(
-                            value: inceptionV3,
-                            child: Text(inceptionV3),
+                            value: dense121Old,
+                            child: Text(dense121Old),
                           ),
-                          const PopupMenuItem<String>(
-                            value: vgg16,
-                            child: Text(vgg16),
-                          ),
+                          // const PopupMenuItem<String>(
+                          //   value: vgg16,
+                          //   child: Text(vgg16),
+                          // ),
                           // const PopupMenuItem<String>(
                           //   value: vgg19,
                           //   child: Text(vgg19),
@@ -301,37 +310,40 @@ class _MyAppState extends State<MyApp> {
             flex: 7,
             child: _image == null
                 ? noImageSelected()
-                : Column(
-                  children: [
-                    Image.file(
-                      _image!,
-                      height: size.height/2,
-                      fit: BoxFit.scaleDown,
-                    ),
-                  ],
+                : Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Column(
+              children: [
+                  Image.file(
+                    _image!,
+                    height: size.height/2,
+                    fit: BoxFit.scaleDown,
+                  ),
+              ],
+            ),
                 ),
           ),
           Flexible(
-            fit: FlexFit.tight,
-            flex: 3,
-            child: _recognitions != null && !_busy
-                ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
+              fit: FlexFit.tight,
+              flex: 3,
+              child: _recognitions != null && !_busy
+                  ? Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Row(
                         children: [
+                          !isDetected ? Container() :
                           Lottie.asset(_isGenuine ? "assets/lottie/genuine.json" : "assets/lottie/counterfeit.json", height: 40),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              "${getResultName(_recognitions?.first?["label"])} with "
-                                  "${(_recognitions?.first?["confidence"] *100).toStringAsFixed(2)}% Confidence",
+                              resultText ?? "",
                               style: TextStyle(
-                                color: _isGenuine ? Colors.green : Colors.red,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold
+                                  color: !isDetected ? Colors.blue : _isGenuine ? Colors.green : Colors.red,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold
                               ),
                             ),
                           ),
@@ -393,32 +405,32 @@ class _MyAppState extends State<MyApp> {
                         ],
                       )
                     ]
-                  ),
-                ) : Container()
+                ),
+              ) : Container()
           ),
 
         ],
       ),
       floatingActionButton: _image != null ? Row(
         mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
 
-              FloatingActionButton(
-                heroTag: "file",
-                onPressed: predictImagePicker,
-                tooltip: 'Pick Image',
-                child: const Icon(Icons.image),
-              ),
-              const SizedBox(width: 10,),
-              FloatingActionButton(
-                heroTag: "camera",
-                onPressed: openCamera,
-                tooltip: 'Take Photo',
-                child: const Icon(Icons.camera_alt),
-              ),
-            ],
-          ) : Container(),
+          FloatingActionButton(
+            heroTag: "file",
+            onPressed: predictImagePicker,
+            tooltip: 'Pick Image',
+            child: const Icon(Icons.image),
+          ),
+          const SizedBox(width: 10,),
+          FloatingActionButton(
+            heroTag: "camera",
+            onPressed: openCamera,
+            tooltip: 'Take Photo',
+            child: const Icon(Icons.camera_alt),
+          ),
+        ],
+      ) : Container(),
     );
   }
 
@@ -432,30 +444,30 @@ class _MyAppState extends State<MyApp> {
           radius: Radius.circular(10),
           color: Colors.blueAccent,
           child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GestureDetector(
-                    onTap: predictImagePicker,
-                    child:
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Lottie.asset('assets/lottie/add_image.json', height: 150),
-                        )),
-                const Text(
-                  'Select image to test OR',
-                  style: TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 10,),
-                FloatingActionButton(
-                  heroTag: "camera_2",
-                  elevation: 0,
-                  onPressed: openCamera,
-                  tooltip: 'Take Photo',
-                  child: const Icon(Icons.camera_alt),
-                ),
-              ],
-            ),
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                  onTap: predictImagePicker,
+                  child:
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Lottie.asset('assets/lottie/add_image.json', height: 150),
+                  )),
+              const Text(
+                'Select image to test OR',
+                style: TextStyle(fontSize: 18),
+              ),
+              const SizedBox(height: 10,),
+              FloatingActionButton(
+                heroTag: "camera_2",
+                elevation: 0,
+                onPressed: openCamera,
+                tooltip: 'Take Photo',
+                child: const Icon(Icons.camera_alt),
+              ),
+            ],
+          ),
         ),
       ),
     );

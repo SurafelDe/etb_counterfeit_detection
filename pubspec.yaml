@@ -69,10 +69,7 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-   - assets/InceptionV3.tflite
-   - assets/Vgg16.tflite
-#   - assets/Vgg19.tflite
-   - assets/dense121.tflite
+   - assets/
    - assets/labels.txt
    - assets/lottie/
 
